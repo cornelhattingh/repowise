@@ -8,8 +8,7 @@ intra-community or cross-community based on community assignments.
 from __future__ import annotations
 
 import re
-from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import networkx as nx
 import structlog

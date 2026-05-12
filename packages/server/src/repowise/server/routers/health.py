@@ -5,11 +5,11 @@ These endpoints are NOT protected by API key auth.
 
 from __future__ import annotations
 
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 
-from fastapi import APIRouter, Depends, Request
 from repowise.core.persistence.coordinator import AtomicStorageCoordinator
 from repowise.core.persistence.database import get_session
 from repowise.core.persistence.models import GenerationJob, Page
@@ -104,9 +104,7 @@ async def coordinator_health(
     # Drift percentage (0–100)
     drift_pct: float | None = round(drift * 100, 2) if drift is not None else None
 
-    if drift_pct is None:
-        status = "ok"
-    elif drift_pct <= 1.0:
+    if drift_pct is None or drift_pct <= 1.0:
         status = "ok"
     elif drift_pct <= 5.0:
         status = "warning"

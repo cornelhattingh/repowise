@@ -8,10 +8,8 @@ import json
 import re
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqlalchemy import text
 
 from repowise.core.persistence.database import get_session
 from repowise.core.persistence.models import (
@@ -186,7 +184,7 @@ async def _get_security_signals(
             {"kind": r[0], "severity": r[1], "snippet": r[2]}
             for r in rows.all()
         ]
-    except Exception:  # noqa: BLE001 — table may not exist pre-migration
+    except Exception:
         return []
 
 

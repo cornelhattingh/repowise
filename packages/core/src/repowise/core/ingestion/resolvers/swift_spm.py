@@ -82,7 +82,7 @@ def build_swift_targets(repo_path: Path | None) -> dict[str, str]:
     return merged
 
 
-def get_or_build_swift_targets(ctx: "ResolverContext") -> dict[str, str]:
+def get_or_build_swift_targets(ctx: ResolverContext) -> dict[str, str]:
     cached = getattr(ctx, "_swift_targets", None)
     if cached is not None:
         return cached
@@ -91,7 +91,7 @@ def get_or_build_swift_targets(ctx: "ResolverContext") -> dict[str, str]:
     return mapping
 
 
-def resolve_via_swift_targets(module_path: str, ctx: "ResolverContext") -> str | None:
+def resolve_via_swift_targets(module_path: str, ctx: ResolverContext) -> str | None:
     """Pick a ``.swift`` file under the SPM target's source dir matching the
     last identifier of *module_path*. Returns repo-relative path or None.
     """

@@ -8,11 +8,11 @@ import logging
 import zipfile
 from pathlib import PurePosixPath
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
 from repowise.core.persistence import crud
 from repowise.core.persistence.database import get_session
 from repowise.core.persistence.models import (
@@ -99,8 +99,8 @@ async def list_repos(
     if ws_config is None or ws_root is None:
         return responses
 
-    from pathlib import Path as _P
     import json as _json
+    from pathlib import Path as _P
 
     ws_root_path = _P(ws_root)
     # Map local_path → alias entry for quick attach on indexed rows.
@@ -131,7 +131,8 @@ async def list_repos(
                 pass
 
     # Synthesize entries for repos in the workspace that aren't indexed yet.
-    from datetime import datetime, UTC as _UTC
+    from datetime import UTC as _UTC
+    from datetime import datetime
 
     now = datetime.now(_UTC)
     for entry in ws_config.repos:
@@ -382,7 +383,7 @@ def _resolve_repo_session_factory(app_state, repo_id: str):
     ``resolve_session_factory`` (or its request-scoped sibling
     ``resolve_request_session_factory``) directly.
     """
-    from repowise.server.deps import resolve_session_factory  # noqa: PLC0415
+    from repowise.server.deps import resolve_session_factory
 
     return resolve_session_factory(app_state, repo_id)
 

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 import structlog
@@ -70,7 +70,7 @@ log = structlog.get_logger(__name__)
 QUERIES_DIR = Path(__file__).parent / "queries"
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load_compiled_query(lang: str) -> object | None:
     """Process-wide cache of compiled tree-sitter Query objects by language tag.
 

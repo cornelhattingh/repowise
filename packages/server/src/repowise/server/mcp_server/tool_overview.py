@@ -6,7 +6,8 @@ import json
 from collections import Counter, defaultdict
 from typing import Any
 
-from sqlalchemy import func as sa_func, select
+from sqlalchemy import func as sa_func
+from sqlalchemy import select
 
 from repowise.core.persistence.database import get_session
 from repowise.core.persistence.models import (
@@ -17,12 +18,10 @@ from repowise.core.persistence.models import (
 from repowise.server.mcp_server import _state
 from repowise.server.mcp_server._helpers import (
     _get_repo,
-    _is_workspace_mode,
     _resolve_all_contexts,
     _resolve_repo_context,
 )
 from repowise.server.mcp_server._server import mcp
-
 
 # ---------------------------------------------------------------------------
 # repo="all" — workspace-level summary

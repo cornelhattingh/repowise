@@ -77,6 +77,14 @@ PROVIDER_CATALOG: list[dict[str, Any]] = [
         "requires_key": False,
     },
     {
+        "id": "openai_compatible",
+        "name": "OpenAI-Compatible (Local/Custom)",
+        "default_model": "llama3.2",
+        "models": ["llama3.2", "mistral", "qwen2.5-coder", "phi-3", "codellama"],
+        "env_keys": [],
+        "requires_key": False,
+    },
+    {
         "id": "litellm",
         "name": "LiteLLM",
         "default_model": "groq/llama-3.1-70b-versatile",
@@ -145,6 +153,7 @@ def _get_base_url_for_provider(provider_id: str) -> str | None:
     env_map = {
         "anthropic": ["ANTHROPIC_BASE_URL"],
         "openai": ["OPENAI_BASE_URL"],
+        "openai_compatible": ["OPENAI_COMPATIBLE_BASE_URL", "OPENAI_BASE_URL"],
         "gemini": ["GEMINI_BASE_URL"],
         "ollama": ["OLLAMA_BASE_URL"],
         "deepseek": ["DEEPSEEK_BASE_URL"],

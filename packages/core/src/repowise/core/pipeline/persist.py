@@ -123,7 +123,6 @@ async def persist_pipeline_result(
     """
     from repowise.core.persistence import (
         batch_upsert_graph_edges,
-        batch_upsert_graph_nodes,
         batch_upsert_symbols,
         upsert_page_from_generated,
     )
@@ -194,7 +193,7 @@ async def persist_pipeline_result(
             )
             if findings:
                 await scanner.persist(pf.file_info.path, findings)
-    except Exception as _sec_err:  # noqa: BLE001 — scanner must never break the pipeline
+    except Exception as _sec_err:
         logger.warning("security_scan_skipped", error=str(_sec_err))
 
     # ---- Git metadata --------------------------------------------------------

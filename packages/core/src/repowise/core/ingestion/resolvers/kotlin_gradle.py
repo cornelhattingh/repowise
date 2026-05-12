@@ -170,7 +170,7 @@ def build_kotlin_index(repo_path: Path | None) -> KotlinProjectIndex:
     return index
 
 
-def get_or_build_kotlin_index(ctx: "ResolverContext") -> KotlinProjectIndex:
+def get_or_build_kotlin_index(ctx: ResolverContext) -> KotlinProjectIndex:
     cached = getattr(ctx, "_kotlin_index", None)
     if cached is not None:
         return cached
@@ -179,7 +179,7 @@ def get_or_build_kotlin_index(ctx: "ResolverContext") -> KotlinProjectIndex:
     return index
 
 
-def resolve_via_kotlin_index(module_path: str, ctx: "ResolverContext") -> str | None:
+def resolve_via_kotlin_index(module_path: str, ctx: ResolverContext) -> str | None:
     index = get_or_build_kotlin_index(ctx)
     matches = index.lookup_class(module_path)
     if matches:

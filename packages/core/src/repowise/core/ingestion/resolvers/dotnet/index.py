@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import structlog
 
 from .global_usings import collect_project_global_usings
-from .msbuild import MSBuildProject, find_csproj_files, find_directory_build_props, parse_csproj
+from .msbuild import MSBuildProject, find_csproj_files, parse_csproj
 from .namespace_map import build_namespace_map
 from .solution import find_sln_files, parse_sln
 
@@ -147,7 +147,7 @@ def build_index(repo_path: Path) -> DotNetProjectIndex:
 _INDEX_KEY = "_dotnet_index"
 
 
-def get_or_build_index(ctx: "ResolverContext") -> DotNetProjectIndex | None:
+def get_or_build_index(ctx: ResolverContext) -> DotNetProjectIndex | None:
     """Return the cached DotNetProjectIndex, building it on first access."""
     if not ctx.repo_path:
         return None

@@ -45,6 +45,7 @@ class RateLimitConfig:
 PROVIDER_DEFAULTS: dict[str, RateLimitConfig] = {
     "anthropic": RateLimitConfig(requests_per_minute=50, tokens_per_minute=100_000),
     "openai": RateLimitConfig(requests_per_minute=60, tokens_per_minute=150_000),
+    "openai_compatible": RateLimitConfig(requests_per_minute=60, tokens_per_minute=150_000),
     "openrouter": RateLimitConfig(requests_per_minute=60, tokens_per_minute=200_000),
     "gemini": RateLimitConfig(requests_per_minute=60, tokens_per_minute=1_000_000),
     # Ollama runs locally — effectively unlimited, but we cap to avoid OOM

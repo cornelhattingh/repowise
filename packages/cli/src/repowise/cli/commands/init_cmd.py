@@ -897,7 +897,7 @@ def _workspace_init(
     "provider_name",
     default=None,
     help=(
-        "LLM provider name (anthropic, openai, openrouter, gemini, "
+        "LLM provider name (anthropic, openai, openai_compatible, openrouter, gemini, "
         "deepseek, ollama, litellm, mock)."
     ),
 )

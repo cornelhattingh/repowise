@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from repowise.core.ingestion.languages.registry import REGISTRY as _LANG_REGISTRY
 
-
 # Non-code languages that should never be flagged as dead code.
 # Derived from the centralised LanguageRegistry — passthrough config/infra
 # languages plus "unknown".
@@ -187,7 +186,6 @@ _NEVER_PACKAGE_DIRS: frozenset[str] = frozenset({
     ".circleci",
     ".buildkite",
     ".cargo",
-    ".husky",
     ".yarn",
     "docs",
     "doc",

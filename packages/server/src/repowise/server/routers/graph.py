@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, Depends, HTTPException, Query
 from repowise.core.persistence import crud
 from repowise.core.persistence.models import (
     DeadCodeFinding,
@@ -21,10 +21,12 @@ from repowise.server.mcp_server._graph_utils import (
     bfs_trace,
     community_cohesion,
     community_label,
-    entry_point_score as _ep_score,
     parse_community_meta,
     percentile_rank,
     resolve_trace_communities,
+)
+from repowise.server.mcp_server._graph_utils import (
+    entry_point_score as _ep_score,
 )
 from repowise.server.schemas import (
     CallerCalleeEntry,

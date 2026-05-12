@@ -16,6 +16,9 @@ from typing import Any
 
 # --- Import submodules in dependency order (triggers tool registration) ---
 from repowise.server.mcp_server import _state
+from repowise.server.mcp_server._graph_utils import (  # used by routers/graph.py
+    build_visual_context as _build_visual_context,
+)
 from repowise.server.mcp_server._helpers import (
     _build_origin_story,
     _compute_alignment,
@@ -26,9 +29,6 @@ from repowise.server.mcp_server._server import (
     create_mcp_server,
     mcp,
     run_mcp,
-)
-from repowise.server.mcp_server._graph_utils import (  # used by routers/graph.py
-    build_visual_context as _build_visual_context,
 )
 from repowise.server.mcp_server.tool_answer import get_answer
 from repowise.server.mcp_server.tool_context import get_context

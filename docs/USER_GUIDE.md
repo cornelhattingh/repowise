@@ -162,7 +162,7 @@ repowise init [PATH]
 
 | Flag | Description |
 |------|-------------|
-| `--provider` | LLM provider: `anthropic`, `openai`, `openrouter`, `gemini`, `deepseek`, `ollama`, `litellm`, `mock`. Auto-detected from env vars if not set. |
+| `--provider` | LLM provider: `anthropic`, `openai`, `openai_compatible`, `openrouter`, `gemini`, `deepseek`, `ollama`, `litellm`, `mock`. Auto-detected from env vars if not set. |
 | `--model` | Model name override (e.g., `claude-sonnet-4-6`, `gpt-5.4-nano`) |
 | `--embedder` | Embedder for semantic search: `gemini`, `openai`, `openai_compatible`, `openrouter`, `mock`. Auto-detected from env vars. |
 | `--index-only` | Skip LLM generation entirely. Only parse, build graph, and index git. Free. |
@@ -933,8 +933,8 @@ repowise watch --workspace           # all workspace repos
 | `LITELLM_API_BASE` | No | LiteLLM base URL alias (same as `LITELLM_BASE_URL`) |
 | `REPOWISE_DB_URL` | No | Database URL override (default: `.repowise/wiki.db`) |
 | `REPOWISE_EMBEDDER` | No | Embedder for semantic search: `gemini`, `openai`, `openai_compatible`, `openrouter`, `mock` |
-| `OPENAI_COMPATIBLE_BASE_URL` | If using `openai_compatible` embedder | Base URL of the OpenAI-compatible embedding server (e.g. `http://localhost:11434/v1` for Ollama) |
-| `OPENAI_COMPATIBLE_API_KEY` | No | API key for the compatible server. Leave unset or empty for keyless local servers |
+| `OPENAI_COMPATIBLE_BASE_URL` | If using `openai_compatible` provider or embedder | Base URL of the OpenAI-compatible server (e.g. `http://localhost:11434/v1` for Ollama) |
+| `OPENAI_COMPATIBLE_API_KEY` | No | API key for the compatible server. Leave unset for keyless local servers |
 | `REPOWISE_API_URL` | Frontend only | Backend URL for the web UI (default: `http://localhost:7337`) |
 | `REPOWISE_API_KEY` | No | Optional API key to protect the server |
 
@@ -1056,6 +1056,40 @@ repowise init --embedder openai_compatible
 ```bash
 repowise reindex --embedder openai_compatible
 ```
+
+---
+
+### Using a local or self-hosted LLM server (OpenAI-compatible)
+
+The `openai_compatible` provider works with any server that implements the OpenAI Chat Completions API.
+
+**Quick setup with Ollama for chat:**
+
+```bash
+# Pull a chat model
+ollama pull llama3.2
+
+# Tell repowise to use it
+export OPENAI_COMPATIBLE_BASE_URL="http://localhost:11434/v1"
+repowise init --provider openai_compatible --model llama3.2
+```
+
+**LM Studio:**
+
+```bash
+export OPENAI_COMPATIBLE_BASE_URL="http://localhost:1234/v1"
+repowise init --provider openai_compatible --model your-loaded-model
+```
+
+**vLLM or custom endpoint with API key:**
+
+```bash
+export OPENAI_COMPATIBLE_BASE_URL="https://my-vllm.example.com/v1"
+export OPENAI_COMPATIBLE_API_KEY="my-key"
+repowise init --provider openai_compatible --model mistral-7b
+```
+
+**Auto-detection:** If `OPENAI_COMPATIBLE_BASE_URL` is set and no other provider keys are present, repowise automatically selects `openai_compatible` as the LLM provider.
 
 ---
 

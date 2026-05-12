@@ -20,7 +20,8 @@ Reference: https://docs.litellm.ai/docs/providers
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from tenacity import (
@@ -72,7 +73,7 @@ class LiteLLMProvider(BaseProvider):
         api_base: str | None = None,
         base_url: str | None = None,
         rate_limiter: RateLimiter | None = None,
-        cost_tracker: "CostTracker | None" = None,
+        cost_tracker: CostTracker | None = None,
     ) -> None:
         self._model = model
         self._api_key = api_key

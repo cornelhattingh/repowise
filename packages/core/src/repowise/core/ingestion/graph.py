@@ -522,8 +522,9 @@ class GraphBuilder:
 
     async def persist(self, db_path: Path, repo_id: str) -> None:
         """Persist the graph to an SQLite database."""
-        import aiosqlite
         import sqlite3
+
+        import aiosqlite
 
         pr = self.pagerank()
         bc = self.betweenness_centrality()

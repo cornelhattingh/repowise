@@ -14,8 +14,9 @@ Adding a new provider:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from repowise.core.reasoning import ReasoningMode, normalize_reasoning
 

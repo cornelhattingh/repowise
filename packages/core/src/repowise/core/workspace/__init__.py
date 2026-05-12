@@ -15,21 +15,14 @@ from .config import (
     ensure_workspace_data_dir,
     find_workspace_root,
 )
-from .scanner import (
-    DiscoveredRepo,
-    ScanResult,
-    scan_for_repos,
-)
-from .registry import (
-    RepoContext,
-    RepoRegistry,
-)
-from .update import (
-    RepoUpdateResult,
-    check_repo_staleness,
-    run_cross_repo_hooks,
-    update_single_repo_index,
-    update_workspace,
+from .contracts import (
+    CONTRACTS_FILENAME,
+    Contract,
+    ContractLink,
+    ContractStore,
+    load_contract_store,
+    run_contract_extraction,
+    save_contract_store,
 )
 from .cross_repo import (
     CROSS_REPO_EDGES_FILENAME,
@@ -40,14 +33,21 @@ from .cross_repo import (
     run_cross_repo_analysis,
     save_overlay,
 )
-from .contracts import (
-    CONTRACTS_FILENAME,
-    Contract,
-    ContractLink,
-    ContractStore,
-    load_contract_store,
-    run_contract_extraction,
-    save_contract_store,
+from .registry import (
+    RepoContext,
+    RepoRegistry,
+)
+from .scanner import (
+    DiscoveredRepo,
+    ScanResult,
+    scan_for_repos,
+)
+from .update import (
+    RepoUpdateResult,
+    check_repo_staleness,
+    run_cross_repo_hooks,
+    update_single_repo_index,
+    update_workspace,
 )
 
 __all__ = [

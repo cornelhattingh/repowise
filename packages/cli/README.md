@@ -55,7 +55,7 @@ repowise init [PATH] [OPTIONS]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `ollama`, `litellm` |
+| `--provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `openai_compatible`, `openrouter`, `gemini`, `deepseek`, `ollama`, `litellm`, `mock` |
 | `--model` | provider default | Model identifier (e.g., `claude-opus-4-6`, `gpt-4o`) |
 | `--concurrency` | `5` | Max simultaneous LLM calls |
 | `--skip-tests` | off | Skip test files during generation |

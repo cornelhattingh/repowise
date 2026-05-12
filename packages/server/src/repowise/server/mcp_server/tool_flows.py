@@ -13,15 +13,16 @@ from typing import Any
 
 from repowise.core.persistence.crud import (
     get_graph_node,
-    get_graph_nodes_by_ids,
     get_top_entry_points,
 )
 from repowise.core.persistence.database import get_session
 from repowise.core.persistence.models import GraphNode
 from repowise.server.mcp_server._graph_utils import (
     bfs_trace,
-    entry_point_score as _ep_score,
     resolve_trace_communities,
+)
+from repowise.server.mcp_server._graph_utils import (
+    entry_point_score as _ep_score,
 )
 from repowise.server.mcp_server._helpers import (
     _get_repo,

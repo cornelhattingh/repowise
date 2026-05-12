@@ -9,9 +9,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -155,6 +156,16 @@ class RepoRegistry:
         if not db_path.exists():
             _log.warning("No wiki.db for repo '%s' at %s", alias, db_path)
 
+        from sqlalchemy.ext.asyncio import (
+            AsyncSession as _AsyncSession,
+        )
+        from sqlalchemy.ext.asyncio import (
+            async_sessionmaker as _async_sessionmaker,
+        )
+        from sqlalchemy.ext.asyncio import (
+            create_async_engine,
+        )
+
         from repowise.core.persistence.database import (
             get_db_url,
             init_db,
@@ -162,11 +173,6 @@ class RepoRegistry:
         from repowise.core.persistence.search import FullTextSearch
         from repowise.core.persistence.vector_store import InMemoryVectorStore
         from repowise.core.providers.embedding.base import MockEmbedder
-        from sqlalchemy.ext.asyncio import (
-            AsyncSession as _AsyncSession,
-            async_sessionmaker as _async_sessionmaker,
-            create_async_engine,
-        )
 
         db_url = get_db_url(f"sqlite:///{db_path.as_posix()}")
 

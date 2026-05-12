@@ -13,7 +13,8 @@ Recommended models (as of 2026):
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from anthropic import APIStatusError as _AnthropicAPIStatusError
@@ -21,7 +22,6 @@ from anthropic import AsyncAnthropic
 from anthropic import RateLimitError as _AnthropicRateLimitError
 from tenacity import (
     RetryError,
-    before_sleep_log,
     retry,
     retry_if_exception_type,
     stop_after_attempt,

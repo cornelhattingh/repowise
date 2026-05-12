@@ -5,13 +5,15 @@ Supports built-in providers and runtime registration of custom providers,
 enabling community-contributed providers without forking repowise.
 
 Built-in providers:
-    - anthropic   → AnthropicProvider
-    - openai      → OpenAIProvider
-    - openrouter  → OpenRouterProvider
-    - deepseek    → DeepSeekProvider
-    - ollama      → OllamaProvider
-    - litellm     → LiteLLMProvider
-    - mock        → MockProvider (testing only)
+    - anthropic        → AnthropicProvider
+    - openai           → OpenAIProvider
+    - openai_compatible → OpenAICompatibleProvider (custom base URL / local servers)
+    - openrouter       → OpenRouterProvider
+    - gemini           → GeminiProvider
+    - deepseek         → DeepSeekProvider
+    - ollama           → OllamaProvider
+    - litellm          → LiteLLMProvider
+    - mock             → MockProvider (testing only)
 
 Custom provider registration:
     from repowise.core.providers import register_provider
@@ -26,7 +28,8 @@ Custom provider registration:
 from __future__ import annotations
 
 import importlib
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from repowise.core.providers.llm.base import BaseProvider
 from repowise.core.rate_limiter import PROVIDER_DEFAULTS, RateLimitConfig, RateLimiter
@@ -38,6 +41,7 @@ from repowise.core.rate_limiter import PROVIDER_DEFAULTS, RateLimitConfig, RateL
 _BUILTIN_PROVIDERS: dict[str, tuple[str, str]] = {
     "anthropic": ("repowise.core.providers.llm.anthropic", "AnthropicProvider"),
     "openai": ("repowise.core.providers.llm.openai", "OpenAIProvider"),
+    "openai_compatible": ("repowise.core.providers.llm.openai_compatible", "OpenAICompatibleProvider"),
     "openrouter": ("repowise.core.providers.llm.openrouter", "OpenRouterProvider"),
     "gemini": ("repowise.core.providers.llm.gemini", "GeminiProvider"),
     "ollama": ("repowise.core.providers.llm.ollama", "OllamaProvider"),

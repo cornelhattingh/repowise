@@ -9,10 +9,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import subprocess
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .config import WorkspaceConfig
 
@@ -165,7 +166,6 @@ async def update_single_repo_index(
     This refreshes graph, git stats, dead code, and decisions — everything
     except wiki pages. Used by workspace update when no LLM provider is set.
     """
-    from ..pipeline import run_pipeline
     from ..persistence import (
         create_engine,
         create_session_factory,
@@ -174,6 +174,7 @@ async def update_single_repo_index(
         upsert_repository,
     )
     from ..persistence.database import resolve_db_url
+    from ..pipeline import run_pipeline
     from ..pipeline.persist import persist_pipeline_result
 
     alias = repo_path.name
@@ -360,7 +361,7 @@ async def update_workspace(
             if result.updated:
                 entry = ws_config.get_repo(alias)
                 if entry is not None:
-                    entry.indexed_at = datetime.now(timezone.utc).isoformat()
+                    entry.indexed_at = datetime.now(UTC).isoformat()
                     entry.last_commit_at_index = new_head
 
             if on_repo_done:

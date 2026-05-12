@@ -7,7 +7,6 @@ startup from ``.repowise-workspace/`` JSON files) — no DB access needed.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import sqlite3
 from pathlib import Path
@@ -16,7 +15,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from repowise.server.deps import (
     get_cross_repo_enricher,
-    get_db_session,
     get_workspace_config,
     resolve_session_factory,
     verify_api_key,
@@ -489,11 +487,12 @@ async def sync_workspace(
 
     _require_workspace(ws_config)
 
+    from sqlalchemy import select
+
     from repowise.core.persistence import crud
     from repowise.core.persistence.database import get_session
     from repowise.core.persistence.models import GenerationJob
     from repowise.server.routers.repos import _launch_job_task
-    from sqlalchemy import select
 
     ws_root = getattr(request.app.state, "workspace_root", None)
     if ws_root is None:
@@ -584,7 +583,7 @@ async def sync_workspace(
                     )
                     await session.commit()
                     return job.id, None
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 return None, str(exc)
 
         job_id, err = await _create_job()

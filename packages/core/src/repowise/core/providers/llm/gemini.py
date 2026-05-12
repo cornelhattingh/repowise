@@ -19,7 +19,8 @@ import structlog
 # Suppress "Both GOOGLE_API_KEY and GEMINI_API_KEY are set" from google-genai SDK.
 # We resolve and pass the key explicitly, so the env-var conflict warning is noise.
 logging.getLogger("google_genai._api_client").setLevel(logging.ERROR)
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from tenacity import (
     RetryError,
@@ -68,7 +69,7 @@ class GeminiProvider(BaseProvider):
         api_key: str | None = None,
         base_url: str | None = None,
         rate_limiter: RateLimiter | None = None,
-        cost_tracker: "CostTracker | None" = None,
+        cost_tracker: CostTracker | None = None,
     ) -> None:
         self._model = model
         self._api_key = (
@@ -261,7 +262,6 @@ class GeminiProvider(BaseProvider):
         yielded and the caller must handle it (though this will fail on
         the next round-trip due to missing thought signatures).
         """
-        import json as _json
 
         model_name = self._model
         api_key = self._api_key

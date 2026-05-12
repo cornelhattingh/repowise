@@ -75,7 +75,7 @@ def build_workspace_map(repo_path: Path | None) -> dict[str, str]:
     return result
 
 
-def get_or_build_workspace_map(ctx: "ResolverContext") -> dict[str, str]:
+def get_or_build_workspace_map(ctx: ResolverContext) -> dict[str, str]:
     cached = getattr(ctx, "_ts_workspace_map", None)
     if cached is not None:
         return cached
@@ -84,7 +84,7 @@ def get_or_build_workspace_map(ctx: "ResolverContext") -> dict[str, str]:
     return mapping
 
 
-def resolve_via_workspaces(module_path: str, ctx: "ResolverContext") -> str | None:
+def resolve_via_workspaces(module_path: str, ctx: ResolverContext) -> str | None:
     """Resolve a bare specifier (``@scope/pkg`` or ``@scope/pkg/sub/file``)
     against the workspace map. Returns a repo-relative path or None.
     """

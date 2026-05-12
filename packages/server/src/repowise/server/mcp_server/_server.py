@@ -177,7 +177,6 @@ async def _lifespan(server: FastMCP):
 
     if ws_root is not None and ws_config is not None:
         # Workspace mode — use RepoRegistry for multi-repo serving
-        from pathlib import Path as _Path
 
         from repowise.core.workspace.registry import RepoRegistry
 

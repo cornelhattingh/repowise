@@ -12,7 +12,6 @@ from repowise.core.persistence.models import (
     GitMetadata,
     Page,
 )
-from repowise.server.mcp_server import _state
 from repowise.server.mcp_server._helpers import (
     _get_repo,
     _resolve_all_contexts,

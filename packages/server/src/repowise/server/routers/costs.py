@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import date, datetime
 
 import sqlalchemy as sa
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import APIRouter, Depends, Query
 from repowise.core.persistence.models import LlmCost
 from repowise.server.deps import get_db_session, verify_api_key
 from repowise.server.schemas import CostGroupResponse, CostSummaryResponse

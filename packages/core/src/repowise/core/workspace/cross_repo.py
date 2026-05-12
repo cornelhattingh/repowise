@@ -16,9 +16,8 @@ import subprocess
 import time
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from .config import WorkspaceConfig, ensure_workspace_data_dir
 
@@ -270,7 +269,7 @@ def detect_cross_repo_co_changes(
         freq = pair_freq[(src_repo, src_file, tgt_repo, tgt_file)]
         last_ts = pair_last_ts.get((src_repo, src_file, tgt_repo, tgt_file), 0)
         last_date = (
-            datetime.fromtimestamp(last_ts, tz=timezone.utc).strftime("%Y-%m-%d")
+            datetime.fromtimestamp(last_ts, tz=UTC).strftime("%Y-%m-%d")
             if last_ts > 0
             else ""
         )
@@ -733,7 +732,7 @@ async def run_cross_repo_analysis(
 
     overlay = CrossRepoOverlay(
         version=1,
-        generated_at=datetime.now(timezone.utc).isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
         co_changes=co_changes,
         package_deps=package_deps,
         repo_summaries=repo_summaries,

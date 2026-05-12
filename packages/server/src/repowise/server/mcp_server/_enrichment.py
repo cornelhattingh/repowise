@@ -10,7 +10,6 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
 
 _log = logging.getLogger("repowise.mcp.enrichment")
 

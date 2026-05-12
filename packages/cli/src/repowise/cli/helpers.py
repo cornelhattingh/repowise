@@ -324,6 +324,7 @@ def resolve_provider(
         env_vars = {
             "anthropic": ["ANTHROPIC_BASE_URL"],
             "openai": ["OPENAI_BASE_URL"],
+            "openai_compatible": ["OPENAI_COMPATIBLE_BASE_URL", "OPENAI_BASE_URL"],
             "gemini": ["GEMINI_BASE_URL"],
             "deepseek": ["DEEPSEEK_BASE_URL"],
             "ollama": ["OLLAMA_BASE_URL"],
@@ -373,10 +374,25 @@ def resolve_provider(
             kwargs["api_key"] = os.environ["LITELLM_API_KEY"]
         elif provider_name == "ollama" and os.environ.get("OLLAMA_BASE_URL"):
             kwargs["base_url"] = os.environ["OLLAMA_BASE_URL"]
+        elif provider_name == "openai_compatible":
+            key = os.environ.get("OPENAI_COMPATIBLE_API_KEY") or os.environ.get("OPENAI_API_KEY")
+            if key:
+                kwargs["api_key"] = key
+            # No key required — keyless servers are supported
 
         return get_provider(provider_name, **kwargs)
 
     # Auto-detect from env vars
+    if (
+        os.environ.get("OPENAI_COMPATIBLE_BASE_URL")
+        and os.environ["OPENAI_COMPATIBLE_BASE_URL"].strip()
+    ):
+        kwargs = {"model": model} if model else {}
+        kwargs["base_url"] = os.environ["OPENAI_COMPATIBLE_BASE_URL"]
+        key = os.environ.get("OPENAI_COMPATIBLE_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        if key:
+            kwargs["api_key"] = key
+        return get_provider("openai_compatible", **kwargs)
     if os.environ.get("ANTHROPIC_API_KEY") and os.environ["ANTHROPIC_API_KEY"].strip():
         kwargs = (
             {"model": model, "api_key": os.environ["ANTHROPIC_API_KEY"]}
@@ -433,7 +449,7 @@ def resolve_provider(
 
     raise click.ClickException(
         "No provider configured. Use --provider, set REPOWISE_PROVIDER, "
-        "or set ANTHROPIC_API_KEY / OPENAI_API_KEY / OPENROUTER_API_KEY / OLLAMA_BASE_URL / GEMINI_API_KEY / GOOGLE_API_KEY / DEEPSEEK_API_KEY / LITELLM_API_KEY."
+        "or set ANTHROPIC_API_KEY / OPENAI_API_KEY / OPENAI_COMPATIBLE_BASE_URL / OPENROUTER_API_KEY / OLLAMA_BASE_URL / GEMINI_API_KEY / GOOGLE_API_KEY / DEEPSEEK_API_KEY / LITELLM_API_KEY."
     )
 
 
@@ -467,6 +483,7 @@ def validate_provider_config(provider_name: str | None = None) -> list[str]:
     provider_env_vars = {
         "anthropic": ["ANTHROPIC_API_KEY"],
         "openai": ["OPENAI_API_KEY"],
+        "openai_compatible": [],  # No required env vars — base URL is optional
         "openrouter": ["OPENROUTER_API_KEY"],
         "deepseek": ["DEEPSEEK_API_KEY"],
         "gemini": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],  # Either one
@@ -520,6 +537,17 @@ def validate_provider_config(provider_name: str | None = None) -> list[str]:
                     warnings.append(
                         f"Provider '{name}' requires environment variables: {', '.join(missing)}"
                     )
+
+    # Special check: openai_compatible without any base URL will fall back to OpenAI's cloud
+    if provider_name == "openai_compatible":
+        if not os.environ.get("OPENAI_COMPATIBLE_BASE_URL") and not os.environ.get(
+            "OPENAI_BASE_URL"
+        ):
+            warnings.append(
+                "openai_compatible: Neither OPENAI_COMPATIBLE_BASE_URL nor OPENAI_BASE_URL is set. "
+                "The provider will fall back to the default OpenAI endpoint. "
+                "Set OPENAI_COMPATIBLE_BASE_URL to point to your local or custom server."
+            )
 
     return warnings
 

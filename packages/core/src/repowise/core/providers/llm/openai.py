@@ -13,7 +13,8 @@ Recommended models (as of 2026):
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import structlog
 from openai import APIStatusError as _OpenAIAPIStatusError
@@ -129,7 +130,7 @@ class OpenAIProvider(BaseProvider):
         model: str = "gpt-5.4-nano",
         base_url: str | None = None,
         rate_limiter: RateLimiter | None = None,
-        cost_tracker: "CostTracker | None" = None,
+        cost_tracker: CostTracker | None = None,
     ) -> None:
         resolved_key = api_key or os.environ.get("OPENAI_API_KEY")
         if not resolved_key:

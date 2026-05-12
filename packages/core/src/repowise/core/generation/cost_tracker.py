@@ -174,8 +174,8 @@ class CostTracker:
     ) -> None:
         """Write a row to the ``llm_costs`` table."""
         try:
-            from repowise.core.persistence.models import LlmCost
             from repowise.core.persistence import get_session
+            from repowise.core.persistence.models import LlmCost
 
             async with get_session(self._session_factory) as session:
                 row = LlmCost(
@@ -221,8 +221,9 @@ class CostTracker:
 
         try:
             import sqlalchemy as sa
-            from repowise.core.persistence.models import LlmCost
+
             from repowise.core.persistence import get_session
+            from repowise.core.persistence.models import LlmCost
 
             async with get_session(self._session_factory) as session:
                 if group_by == "model":

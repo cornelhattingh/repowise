@@ -17,7 +17,6 @@ from repowise.core.persistence.crud import (
     get_node_degree_counts,
 )
 from repowise.core.persistence.database import get_session
-from repowise.core.persistence.models import GraphNode
 from repowise.server.mcp_server._helpers import (
     _get_repo,
     _resolve_repo_context,
