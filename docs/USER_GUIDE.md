@@ -164,7 +164,7 @@ repowise init [PATH]
 |------|-------------|
 | `--provider` | LLM provider: `anthropic`, `openai`, `openrouter`, `gemini`, `deepseek`, `ollama`, `litellm`, `mock`. Auto-detected from env vars if not set. |
 | `--model` | Model name override (e.g., `claude-sonnet-4-6`, `gpt-5.4-nano`) |
-| `--embedder` | Embedder for semantic search: `gemini`, `openai`, `mock`. Auto-detected from env vars. |
+| `--embedder` | Embedder for semantic search: `gemini`, `openai`, `openai_compatible`, `openrouter`, `mock`. Auto-detected from env vars. |
 | `--index-only` | Skip LLM generation entirely. Only parse, build graph, and index git. Free. |
 | `--dry-run` | Show generation plan and cost estimate without running anything. |
 | `--test-run` | Generate docs for only the top 10 files (by PageRank) — quick validation. |
@@ -536,7 +536,7 @@ repowise reindex [PATH]
 
 | Flag | Description |
 |------|-------------|
-| `--embedder` | Embedder: `gemini`, `openai`, `auto` (default: auto-detect from config) |
+| `--embedder` | Embedder: `gemini`, `openai`, `openai_compatible`, `openrouter`, `auto` (default: auto-detect from config) |
 | `--batch-size` | Pages per embedding batch (default: 20) |
 
 ---
@@ -932,7 +932,9 @@ repowise watch --workspace           # all workspace repos
 | `LITELLM_BASE_URL` | No | Base URL override for LiteLLM proxy |
 | `LITELLM_API_BASE` | No | LiteLLM base URL alias (same as `LITELLM_BASE_URL`) |
 | `REPOWISE_DB_URL` | No | Database URL override (default: `.repowise/wiki.db`) |
-| `REPOWISE_EMBEDDER` | No | Embedder for semantic search: `gemini`, `openai`, `mock` |
+| `REPOWISE_EMBEDDER` | No | Embedder for semantic search: `gemini`, `openai`, `openai_compatible`, `openrouter`, `mock` |
+| `OPENAI_COMPATIBLE_BASE_URL` | If using `openai_compatible` embedder | Base URL of the OpenAI-compatible embedding server (e.g. `http://localhost:11434/v1` for Ollama) |
+| `OPENAI_COMPATIBLE_API_KEY` | No | API key for the compatible server. Leave unset or empty for keyless local servers |
 | `REPOWISE_API_URL` | Frontend only | Backend URL for the web UI (default: `http://localhost:7337`) |
 | `REPOWISE_API_KEY` | No | Optional API key to protect the server |
 
@@ -1021,6 +1023,40 @@ repowise init --provider openai --model gpt-5.4-nano --force
 repowise update --provider gemini
 ```
 
+### Using a local or self-hosted embedding server (OpenAI-compatible)
+
+Repowise supports any embedding API that follows the OpenAI embeddings format — including **Ollama**, **LM Studio**, **Azure OpenAI**, **Mistral**, and other OpenAI-compatible endpoints.
+
+**Quick setup with Ollama:**
+
+```bash
+# Pull an embedding model
+ollama pull nomic-embed-text
+
+# Tell repowise to use it
+export OPENAI_COMPATIBLE_BASE_URL="http://localhost:11434/v1"
+# No API key required for local Ollama
+
+repowise init --embedder openai_compatible
+```
+
+**Quick setup with a custom endpoint that needs a key (e.g. Azure OpenAI):**
+
+```bash
+export OPENAI_COMPATIBLE_BASE_URL="https://my-resource.openai.azure.com/openai/deployments/text-embedding-ada-002"
+export OPENAI_COMPATIBLE_API_KEY="my-azure-key"
+
+repowise init --embedder openai_compatible
+```
+
+**Auto-detection:** If `OPENAI_COMPATIBLE_BASE_URL` or `OPENAI_BASE_URL` is set, repowise automatically selects `openai_compatible` during `init` and `repowise serve`.
+
+**Rebuild the vector index after switching embedders:**
+
+```bash
+repowise reindex --embedder openai_compatible
+```
+
 ---
 
 ## Troubleshooting
@@ -1032,7 +1068,7 @@ Install the optional dependency: `pip install "repowise[anthropic]"` (or openai,
 Check that an embedder is configured. Run `repowise reindex --embedder gemini` to rebuild the vector store.
 
 **"embedder.mock_active" warning**
-Set `REPOWISE_EMBEDDER=gemini` (or `openai`) for real vector search. Mock embedder produces random vectors — semantic search won't work meaningfully.
+Set `REPOWISE_EMBEDDER=gemini`, `openai`, or `openai_compatible` for real vector search. Mock embedder produces random vectors — semantic search won't work meaningfully.
 
 **Stale pages after code changes**
 Run `repowise update` to sync. Or use `repowise watch` for automatic syncing.

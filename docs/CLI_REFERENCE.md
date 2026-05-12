@@ -52,7 +52,7 @@ In workspace mode, adds: repo scanning, per-repo indexing, cross-repo analysis (
 |------|-------------|
 | `--provider` | LLM provider: `anthropic`, `openai`, `openrouter`, `gemini`, `deepseek`, `ollama`, `litellm`, `mock` |
 | `--model` | Model name override (e.g., `claude-sonnet-4-6`) |
-| `--embedder` | Embedder for semantic search: `gemini`, `openai`, `mock` |
+| `--embedder` | Embedder for semantic search: `gemini`, `openai`, `openai_compatible`, `openrouter`, `mock` |
 | `--index-only` | Skip LLM generation. Only parse, build graph, and index git. Free. |
 | `--dry-run` | Show generation plan and cost estimate without running. |
 | `--test-run` | Generate docs for only the top 10 files (by PageRank). |
@@ -442,6 +442,7 @@ Rebuild vector search index from existing wiki pages.
 ```bash
 repowise reindex
 repowise reindex --embedder gemini --batch-size 50
+repowise reindex --embedder openai_compatible   # uses OPENAI_COMPATIBLE_BASE_URL
 ```
 
 ---

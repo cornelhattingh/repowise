@@ -373,7 +373,7 @@ Exposes 16 MCP tools for querying wiki pages, symbols, the dependency graph, git
 | `ANTHROPIC_API_KEY` | API key for the Anthropic provider |
 | `OPENAI_API_KEY` | API key for the OpenAI provider |
 | `REPOWISE_DB_URL` | Override the default SQLite path (e.g., `postgresql://user:pass@host/db`) |
-| `REPOWISE_EMBEDDER` | Embedder backend: `mock` (default) or `gemini` |
+| `REPOWISE_EMBEDDER` | Embedder backend: `mock` (default), `gemini`, `openai`, or `openai_compatible` |
 
 ---
 

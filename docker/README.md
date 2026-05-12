@@ -38,7 +38,9 @@ docker compose up
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `REPOWISE_DB_URL` | `sqlite+aiosqlite:////data/wiki.db` | Database URL |
-| `REPOWISE_EMBEDDER` | `mock` | Embedder: `gemini`, `openai`, `mock` |
+| `REPOWISE_EMBEDDER` | `mock` | Embedder: `gemini`, `openai`, `openai_compatible`, `mock` |
+| `OPENAI_COMPATIBLE_BASE_URL` | — | Base URL for OpenAI-compatible embedding server (e.g. `http://host.docker.internal:11434/v1` for Ollama) |
+| `OPENAI_COMPATIBLE_API_KEY` | — | API key for the compatible server (optional for keyless local servers) |
 | `ANTHROPIC_API_KEY` | — | Anthropic API key (for chat) |
 | `OPENAI_API_KEY` | — | OpenAI API key (for chat) |
 | `GEMINI_API_KEY` | — | Gemini API key (for chat + embeddings) |

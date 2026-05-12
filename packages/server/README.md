@@ -56,7 +56,7 @@ All configuration is via environment variables:
 |----------|---------|-------------|
 | `REPOWISE_DB_URL` | `sqlite+aiosqlite:///.repowise/wiki.db` | Database URL (SQLite or PostgreSQL) |
 | `REPOWISE_API_KEY` | _(none)_ | Bearer token required on all API requests (leave unset to disable auth) |
-| `REPOWISE_EMBEDDER` | `mock` | Embedder backend: `mock` (FTS only) or `gemini` (real semantic search) |
+| `REPOWISE_EMBEDDER` | `mock` | Embedder backend: `mock` (FTS only), `gemini`, `openai`, or `openai_compatible` (real semantic search) |
 | `REPOWISE_WEBHOOK_SECRET` | _(none)_ | HMAC-SHA256 secret for verifying GitHub/GitLab webhook signatures |
 | `ANTHROPIC_API_KEY` | _(none)_ | Anthropic API key (required for Anthropic provider jobs) |
 | `OPENAI_API_KEY` | _(none)_ | OpenAI API key (required for OpenAI provider jobs) |

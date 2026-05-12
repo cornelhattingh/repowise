@@ -175,7 +175,7 @@ REPOWISE_API_URL=http://localhost:7337 npm run dev --workspace packages/web
 | `ANTHROPIC_API_KEY` | Using Anthropic | Anthropic API key |
 | `OPENAI_API_KEY` | Using OpenAI | OpenAI API key |
 | `GEMINI_API_KEY` | Using Gemini | Google Gemini API key |
-| `REPOWISE_EMBEDDER` | Semantic search | Embedder: `gemini`, `openai`, or `mock` (default) |
+| `REPOWISE_EMBEDDER` | Semantic search | Embedder: `gemini`, `openai`, `openai_compatible`, or `mock` (default) |
 | `REPOWISE_DB_URL` | Custom database | SQLite/PostgreSQL connection string (default: `.repowise/wiki.db`) |
 | `REPOWISE_API_URL` | Frontend only | Backend URL for the web UI (default: `http://localhost:7337`) |
 
