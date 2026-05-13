@@ -746,6 +746,16 @@ _SPECS: tuple[LanguageSpec, ...] = (
         color_hex="#178600",
     ),
     LanguageSpec(
+        tag="razor",
+        display_name="Blazor/C#",
+        extensions=frozenset({".razor"}),
+        is_code=True,
+        is_passthrough=False,
+        generated_suffixes=(".razor.g.cs", ".razor.g.i.cs"),
+        blocked_dirs=("bin", "obj", ".vs", "TestResults"),
+        color_hex="#512bd4",
+    ),
+    LanguageSpec(
         tag="php",
         display_name="PHP",
         extensions=frozenset({".php"}),

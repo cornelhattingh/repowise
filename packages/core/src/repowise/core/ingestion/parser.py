@@ -507,6 +507,15 @@ class ASTParser:
     def parse_file(self, file_info: FileInfo, source: bytes) -> ParsedFile:
         """Parse *source* bytes and return a fully populated ParsedFile."""
         lang = file_info.language
+
+        # Delegate to special handlers for non-tree-sitter formats first,
+        # before the grammar/config guard (these languages have no tree-sitter
+        # grammar but still produce rich ParsedFile output).
+        if lang in ("openapi", "dockerfile", "makefile", "razor"):
+            from .special_handlers import parse_special
+
+            return parse_special(file_info, source, lang)
+
         config = LANGUAGE_CONFIGS.get(lang)
         language = _get_language(lang)
 
@@ -525,12 +534,6 @@ class ASTParser:
                 docstring=None,
                 parse_errors=[],
             )
-
-        # Delegate to special handlers for non-tree-sitter formats
-        if lang in ("openapi", "dockerfile", "makefile"):
-            from .special_handlers import parse_special
-
-            return parse_special(file_info, source, lang)
 
         parser = Parser(language)
         tree = parser.parse(source)
@@ -663,7 +666,7 @@ class ASTParser:
                     start_line=start_line,
                     end_line=def_node.end_point[0] + 1,
                     docstring=docstring,
-                    decorators=[m for m in modifier_texts if m.startswith("@")],
+                    decorators=[m for m in modifier_texts if m.startswith("@") or m.startswith("[")],
                     visibility=visibility,  # type: ignore[arg-type]
                     is_async=is_async,
                     language=file_info.language,

@@ -15,7 +15,7 @@ from collections.abc import Callable
 
 import structlog
 
-from .models import FileInfo, Import, ParsedFile, Symbol
+from .models import CallSite, FileInfo, HeritageRelation, Import, ParsedFile, Symbol
 
 log = structlog.get_logger(__name__)
 
@@ -31,6 +31,7 @@ def parse_special(file_info: FileInfo, source: bytes, lang: str) -> ParsedFile:
         "openapi": _parse_openapi,
         "dockerfile": _parse_dockerfile,
         "makefile": _parse_makefile,
+        "razor": _parse_razor,
     }.get(lang, _parse_unknown)
     try:
         return handler(file_info, source)
@@ -215,6 +216,16 @@ _INCLUDE_RE = re.compile(r"^include\s+(.+)", re.IGNORECASE)
 _PHONY_RE = re.compile(r"^\.PHONY\s*:\s*(.+)")
 
 
+# ---------------------------------------------------------------------------
+# Razor (Blazor) handler — regex patterns
+# ---------------------------------------------------------------------------
+_RAZOR_PAGE_RE = re.compile(r'@page\s+"([^"]+)"')
+_RAZOR_USING_RE = re.compile(r'^@using\s+(\S+)', re.MULTILINE)
+_RAZOR_INHERITS_RE = re.compile(r'^@inherits\s+(\S+)', re.MULTILINE)
+_RAZOR_INJECT_RE = re.compile(r'^@inject\s+(\S+)\s+(\S+)', re.MULTILINE)
+_RAZOR_CODE_OPEN_RE = re.compile(r'@code\s*\{')
+
+
 def _parse_makefile(file_info: FileInfo, source: bytes) -> ParsedFile:
     text = source.decode("utf-8", errors="replace")
     lines = text.splitlines()
@@ -274,6 +285,228 @@ def _parse_makefile(file_info: FileInfo, source: bytes) -> ParsedFile:
         exports=[s.name for s in symbols],
         docstring=None,
         parse_errors=[],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Razor (Blazor) handler
+# ---------------------------------------------------------------------------
+
+
+def _extract_razor_code_block(text: str) -> tuple[str, int] | None:
+    """Extract the content of the @code { } block and its 1-based start line.
+
+    Returns (code_body, start_line) or None if no @code block found.
+    The start_line is the line where @code { appears.
+    """
+    m = _RAZOR_CODE_OPEN_RE.search(text)
+    if not m:
+        return None
+
+    brace_start = m.end() - 1  # position of the opening {
+    depth = 0
+    i = brace_start
+    while i < len(text):
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+            if depth == 0:
+                code_body = text[brace_start + 1:i]
+                start_line = text[:m.start()].count('\n') + 1
+                return code_body, start_line
+        i += 1
+    return None  # unclosed brace
+
+
+def _parse_code_block_csharp(
+    code_body: str,
+    file_info: FileInfo,
+    component_name: str,
+    code_start_line: int,
+) -> tuple[list[Symbol], list[CallSite], list[str]]:
+    """Parse the @code block content as C# and return symbols, calls, and parse errors.
+
+    Uses a lazy import of ASTParser to avoid circular imports.
+    """
+    # Lazy import to avoid circular dependency: parser.py → special_handlers.py
+    from .parser import ASTParser  # noqa: PLC0415
+
+    # Wrap in a class so the C# parser sees valid syntax
+    wrapped = f"class __RazorCodeBlock {{\n{code_body}\n}}"
+    # Line offset: The wrapper adds 1 line before the body.
+    # In the parsed result: line 1 = wrapper, line 2+ = body.
+    # Original file: code_start_line = @code { line, body starts at code_start_line + 1.
+    # So: parsed line 2 → original line code_start_line + 1.
+    # Therefore: original_line = parsed_line - 1 + code_start_line.
+    line_offset = code_start_line - 1
+
+    synthetic_fi = FileInfo(
+        path=file_info.path,
+        abs_path=file_info.abs_path,
+        language="csharp",  # type: ignore[arg-type]
+        size_bytes=len(wrapped),
+        git_hash="",
+        last_modified=file_info.last_modified,
+        is_test=file_info.is_test,
+        is_config=False,
+        is_api_contract=False,
+        is_entry_point=False,
+    )
+
+    parser = ASTParser()
+    parsed = parser.parse_file(synthetic_fi, wrapped.encode("utf-8"))
+
+    symbols: list[Symbol] = []
+    # Build a mapping from old symbol IDs to new symbol IDs for callsite remapping
+    sym_id_map: dict[str, str] = {}
+    
+    for sym in parsed.symbols:
+        # Skip the __RazorCodeBlock wrapper class itself
+        if sym.name == "__RazorCodeBlock":
+            continue
+        
+        new_sym_id = f"{file_info.path}::{component_name}::{sym.name}"
+        # Record the mapping from the synthetic ID to the adjusted ID
+        sym_id_map[sym.id] = new_sym_id
+        
+        adjusted = Symbol(
+            id=new_sym_id,
+            name=sym.name,
+            qualified_name=f"{component_name}.{sym.name}",
+            kind=sym.kind,
+            signature=sym.signature,
+            start_line=sym.start_line + line_offset,
+            end_line=sym.end_line + line_offset,
+            docstring=sym.docstring,
+            decorators=sym.decorators,
+            visibility=sym.visibility,
+            is_async=sym.is_async,
+            language="razor",
+            parent_name=component_name,
+        )
+        symbols.append(adjusted)
+
+    # Adjust call line numbers and remap caller_symbol_id
+    calls = []
+    for c in parsed.calls:
+        # Remap the caller_symbol_id from synthetic to adjusted
+        adjusted_caller_id = sym_id_map.get(c.caller_symbol_id, c.caller_symbol_id)
+        calls.append(CallSite(
+            target_name=c.target_name,
+            receiver_name=c.receiver_name,
+            caller_symbol_id=adjusted_caller_id,
+            line=c.line + line_offset,
+            argument_count=c.argument_count,
+        ))
+
+    return symbols, calls, parsed.parse_errors
+
+
+def _parse_razor(file_info: FileInfo, source: bytes) -> ParsedFile:
+    """Parse a Blazor Razor component file (.razor).
+
+    Extracts:
+    - Component class symbol from the filename stem
+    - @page routes → captured in component signature / docstring
+    - @using directives → Import objects
+    - @inherits → HeritageRelation
+    - @inject dependencies → captured in component docstring
+    - @code { } block → parsed as C# for methods/properties/etc.
+    """
+    from pathlib import Path as _Path
+
+    text = source.decode("utf-8", errors="replace")
+    component_name = _Path(file_info.path).stem
+
+    # --- Directives ---
+    page_routes = _RAZOR_PAGE_RE.findall(text)
+    imports: list[Import] = []
+    heritage: list[HeritageRelation] = []
+
+    for m in _RAZOR_USING_RE.finditer(text):
+        ns = m.group(1)
+        imports.append(
+            Import(
+                raw_statement=m.group(0),
+                module_path=ns,
+                imported_names=["*"],
+                is_relative=False,
+                resolved_file=None,
+            )
+        )
+
+    for m in _RAZOR_INHERITS_RE.finditer(text):
+        base = m.group(1).split("<")[0]  # strip generic params if present
+        inherits_line = text[: m.start()].count("\n") + 1
+        heritage.append(
+            HeritageRelation(
+                child_name=component_name,
+                parent_name=base,
+                kind="extends",
+                line=inherits_line,
+            )
+        )
+
+    inject_pairs: list[tuple[str, str]] = []
+    for m in _RAZOR_INJECT_RE.finditer(text):
+        inject_pairs.append((m.group(1), m.group(2)))
+
+    # --- Component symbol ---
+    route_part = " ".join(f'@page "{r}"' for r in page_routes) if page_routes else ""
+    inject_part = (
+        "; ".join(f"@inject {svc} {prop}" for svc, prop in inject_pairs)
+        if inject_pairs
+        else ""
+    )
+    doc_parts = []
+    if route_part:
+        doc_parts.append(f"Routes: {route_part}")
+    if inject_part:
+        doc_parts.append(f"Injects: {inject_part}")
+    component_doc = "\n".join(doc_parts) or None
+
+    component_sig = f"@component {component_name}"
+    if route_part:
+        component_sig = f"{component_sig} {route_part}"
+
+    component_symbol = Symbol(
+        id=f"{file_info.path}::{component_name}",
+        name=component_name,
+        qualified_name=component_name,
+        kind="class",
+        signature=component_sig,
+        start_line=1,
+        end_line=text.count("\n") + 1,
+        docstring=component_doc,
+        visibility="public",
+        language="razor",
+    )
+
+    # --- @code block ---
+    code_symbols: list[Symbol] = []
+    code_calls = []
+    code_parse_errors: list[str] = []
+    code_result = _extract_razor_code_block(text)
+    if code_result:
+        code_body, code_start_line = code_result
+        try:
+            code_symbols, code_calls, code_parse_errors = _parse_code_block_csharp(
+                code_body, file_info, component_name, code_start_line
+            )
+        except Exception as exc:
+            log.warning("Razor @code block parse failed", path=file_info.path, error=str(exc))
+            code_parse_errors = [str(exc)]
+
+    return ParsedFile(
+        file_info=file_info,
+        symbols=[component_symbol] + code_symbols,
+        imports=imports,
+        exports=[component_name],
+        calls=code_calls,
+        heritage=heritage,
+        docstring=component_doc,
+        parse_errors=code_parse_errors,
     )
 
 

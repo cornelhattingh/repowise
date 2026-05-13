@@ -1,0 +1,16 @@
+@using BlazorApp.Models
+@inherits LayoutComponentBase
+
+<div class="nav-menu">
+    <NavLink href="/">Home</NavLink>
+    <NavLink href="/counter">Counter</NavLink>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

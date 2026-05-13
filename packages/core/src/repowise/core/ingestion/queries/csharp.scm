@@ -8,59 +8,70 @@
 ; ---------------------------------------------------------------------------
 
 (class_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (interface_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (struct_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (enum_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (method_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
   parameters: (parameter_list) @symbol.params
 ) @symbol.def
 
 (constructor_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
   parameters: (parameter_list) @symbol.params
 ) @symbol.def
 
 (property_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (record_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (delegate_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
   parameters: (parameter_list) @symbol.params
 ) @symbol.def
 
 (event_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (event_field_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   (variable_declaration
     (variable_declarator
@@ -68,6 +79,7 @@
 ) @symbol.def
 
 (field_declaration
+  (attribute_list)? @symbol.modifiers
   (modifier) @symbol.modifiers
   (variable_declaration
     (variable_declarator
@@ -79,55 +91,67 @@
 ; ---------------------------------------------------------------------------
 
 (class_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (interface_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (struct_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (enum_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (method_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
   parameters: (parameter_list) @symbol.params
 ) @symbol.def
 
 (constructor_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
   parameters: (parameter_list) @symbol.params
 ) @symbol.def
 
 (property_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (record_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (delegate_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
   parameters: (parameter_list) @symbol.params
 ) @symbol.def
 
 (event_declaration
+  (attribute_list)? @symbol.modifiers
   name: (identifier) @symbol.name
 ) @symbol.def
 
 (event_field_declaration
+  (attribute_list)? @symbol.modifiers
   (variable_declaration
     (variable_declarator
       name: (identifier) @symbol.name))
 ) @symbol.def
 
 (field_declaration
+  (attribute_list)? @symbol.modifiers
   (variable_declaration
     (variable_declarator
       name: (identifier) @symbol.name))

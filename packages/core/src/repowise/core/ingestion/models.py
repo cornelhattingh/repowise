@@ -46,6 +46,7 @@ LanguageTag = Literal[
     "markdown",
     "sql",
     "openapi",
+    "razor",
     "unknown",
 ]
 
