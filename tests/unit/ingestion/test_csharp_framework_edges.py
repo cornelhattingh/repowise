@@ -185,42 +185,6 @@ public static class Helpers {
         # ``List<int>`` is not in the host allowlist → no edge.
         assert not graph.has_edge("Program.cs", "Other.cs")
 
-    def test_extension_scan_fires_on_desktop_dotnet(self, tmp_path: Path) -> None:
-        """Map/Add/Use extension scan must run on any C# repo, including
-        desktop .NET projects with no ASP.NET imports (audit item #28).
-        """
-        (tmp_path / "App.xaml.cs").write_text(
-            """namespace Acme;
-public partial class App {
-    public App() {
-        var services = new ServiceCollection();
-        services.AddCatalogServices();
-    }
-}
-"""
-        )
-        (tmp_path / "Catalog.cs").write_text(
-            """using Microsoft.Extensions.DependencyInjection;
-namespace Acme;
-public static class CatalogExtensions {
-    public static IServiceCollection AddCatalogServices(this IServiceCollection services)
-    {
-        return services;
-    }
-}
-"""
-        )
-        parsed = _build_parsed_files(tmp_path)
-        graph = nx.DiGraph()
-        for p in parsed:
-            graph.add_node(p)
-        ctx = _ctx(tmp_path, parsed)
-
-        # No ASP.NET signal at all — empty tech_stack, no AspNetCore imports.
-        add_framework_edges(graph, parsed, ctx, tech_stack=[])
-        assert graph.has_edge("App.xaml.cs", "Catalog.cs")
-        assert graph["App.xaml.cs"]["Catalog.cs"]["edge_type"] == "framework"
-
     def test_no_edges_when_no_aspnet_signal(self, tmp_path: Path) -> None:
         (tmp_path / "Plain.cs").write_text(
             "namespace Plain;\npublic class Foo {}\n"

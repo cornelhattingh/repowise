@@ -94,16 +94,6 @@ _DEFAULT_CO_CHANGE_COMMIT_LIMIT: int = 2000
 # already sorts partners by weight so the ranking is unaffected.
 _DEFAULT_CO_CHANGE_MIN_COUNT: int = 2
 
-# Commits that touch a very large number of files (mass renames,
-# copyright header sweeps, code-mod runs) produce O(N^2) pairs and
-# contribute no useful co-change signal. Skip pair generation for any
-# commit above this threshold. The decay-weighted score already
-# de-prioritises mass-edit commits, but the pairs are materialised
-# first — for a worst-case 500 files/commit × 2000 commits run that's
-# 250M pairs ≈ 16 GB RAM. The cap is a memory safeguard, not a
-# correctness change: typical commits sit well under 20 files.
-_MAX_FILES_PER_COMMIT_FOR_COCHANGE: int = 200
-
 # Commit message classification regexes (Phase 2.2).
 _COMMIT_CATEGORIES: dict[str, re.Pattern[str]] = {
     "feature": re.compile(
@@ -352,7 +342,7 @@ class GitIndexer:
             # any pairs at all. Defaults live in module constants so
             # tests and re-index paths can override without touching
             # this call site.
-            result = await loop.run_in_executor(
+            return await loop.run_in_executor(
                 executor,
                 self._compute_co_changes,
                 repo,
