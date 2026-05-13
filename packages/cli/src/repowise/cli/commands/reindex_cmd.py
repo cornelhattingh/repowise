@@ -22,8 +22,9 @@ from repowise.cli.helpers import (
     default="auto",
     help="Embedder to use. 'auto' detects from env vars / config.",
 )
+@click.option("--embedder-model", default=None, help="Embedding model name (e.g., 'nomic-embed-text-v2-moe:latest' for Ollama).")
 @click.option("--batch-size", type=int, default=20, help="Pages per embedding batch.")
-def reindex_command(path: str | None, embedder: str, batch_size: int) -> None:
+def reindex_command(path: str | None, embedder: str, embedder_model: str | None, batch_size: int) -> None:
     """Rebuild vector search index from existing wiki pages.
 
     Reads all pages from the database, embeds them using the configured
@@ -38,10 +39,10 @@ def reindex_command(path: str | None, embedder: str, batch_size: int) -> None:
 
     load_dotenv(repo_path)
 
-    run_async(_reindex(repo_path, embedder, batch_size))
+    run_async(_reindex(repo_path, embedder, embedder_model, batch_size))
 
 
-async def _reindex(repo_path, embedder_name: str, batch_size: int) -> None:
+async def _reindex(repo_path, embedder_name: str, embedder_model: str | None, batch_size: int) -> None:
     from pathlib import Path
 
     from sqlalchemy import select
@@ -59,24 +60,24 @@ async def _reindex(repo_path, embedder_name: str, batch_size: int) -> None:
     if embedder_name == "gemini":
         from repowise.core.providers.embedding.gemini import GeminiEmbedder
 
-        embedder_impl = GeminiEmbedder()
+        embedder_impl = GeminiEmbedder(model=embedder_model) if embedder_model else GeminiEmbedder()
         console.print("[green]Using Gemini embedder[/green]")
     elif embedder_name == "openai":
         from repowise.core.providers.embedding.openai import OpenAIEmbedder
 
-        embedder_impl = OpenAIEmbedder()
+        embedder_impl = OpenAIEmbedder(model=embedder_model) if embedder_model else OpenAIEmbedder()
         console.print("[green]Using OpenAI embedder[/green]")
     elif embedder_name == "openai_compatible":
         from repowise.core.providers.embedding.openai_compatible import (
             OpenAICompatibleEmbedder,
         )
 
-        embedder_impl = OpenAICompatibleEmbedder()
+        embedder_impl = OpenAICompatibleEmbedder(model=embedder_model) if embedder_model else OpenAICompatibleEmbedder()
         console.print("[green]Using OpenAI-compatible embedder[/green]")
     elif embedder_name == "openrouter":
         from repowise.core.providers.embedding.openrouter import OpenRouterEmbedder
 
-        embedder_impl = OpenRouterEmbedder()
+        embedder_impl = OpenRouterEmbedder(model=embedder_model) if embedder_model else OpenRouterEmbedder()
         console.print("[green]Using OpenRouter embedder[/green]")
     else:
         console.print(

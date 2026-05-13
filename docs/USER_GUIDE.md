@@ -1027,33 +1027,56 @@ repowise update --provider gemini
 
 Repowise supports any embedding API that follows the OpenAI embeddings format — including **Ollama**, **LM Studio**, **Azure OpenAI**, **Mistral**, and other OpenAI-compatible endpoints.
 
-**Quick setup with Ollama:**
+**Quick setup with Ollama (specify the embedding model):**
 
 ```bash
 # Pull an embedding model
-ollama pull nomic-embed-text
+ollama pull nomic-embed-text-v2-moe:latest
 
-# Tell repowise to use it
+# Tell repowise to use it (model name is optional, but recommended)
 export OPENAI_COMPATIBLE_BASE_URL="http://localhost:11434/v1"
 # No API key required for local Ollama
 
-repowise init --embedder openai_compatible
+repowise init --embedder openai_compatible --embedder-model nomic-embed-text-v2-moe:latest
 ```
 
-**Quick setup with a custom endpoint that needs a key (e.g. Azure OpenAI):**
+**Using `.repowise/.env` for environment variables:**
+
+Create `.repowise/.env` in your repository to persist credentials across runs:
 
 ```bash
-export OPENAI_COMPATIBLE_BASE_URL="https://my-resource.openai.azure.com/openai/deployments/text-embedding-ada-002"
+# .repowise/.env (local repo)
+OPENAI_COMPATIBLE_BASE_URL=http://localhost:11434/v1
+# OPENAI_COMPATIBLE_API_KEY=  # Optional, only if your server requires auth
+```
+
+Then the config saves automatically:
+
+```bash
+# .repowise/config.yaml (auto-generated)
+embedder: openai_compatible
+embedder_model: nomic-embed-text-v2-moe:latest
+```
+
+**Custom endpoint with a key (e.g. Azure OpenAI, vLLM):**
+
+```bash
+export OPENAI_COMPATIBLE_BASE_URL="https://my-resource.openai.azure.com/openai/deployments/text-embedding-3-small"
 export OPENAI_COMPATIBLE_API_KEY="my-azure-key"
 
-repowise init --embedder openai_compatible
+repowise init --embedder openai_compatible --embedder-model text-embedding-3-small
 ```
 
 **Auto-detection:** If `OPENAI_COMPATIBLE_BASE_URL` or `OPENAI_BASE_URL` is set, repowise automatically selects `openai_compatible` during `init` and `repowise serve`.
 
-**Rebuild the vector index after switching embedders:**
+**Override embedding model after init:**
 
 ```bash
+# Switch to a different embedding model without changing the config
+repowise reindex --embedder openai_compatible --embedder-model all-minilm-l6-v2
+
+# Or update the config permanently
+# (edit .repowise/config.yaml to set embedder_model, then:)
 repowise reindex --embedder openai_compatible
 ```
 
@@ -1063,15 +1086,49 @@ repowise reindex --embedder openai_compatible
 
 The `openai_compatible` provider works with any server that implements the OpenAI Chat Completions API.
 
-**Quick setup with Ollama for chat:**
+**Quick setup with Ollama (chat + embedding):**
 
 ```bash
-# Pull a chat model
-ollama pull llama3.2
+# Pull both a chat and embedding model
+ollama pull qwen2.5-coder:3b
+ollama pull nomic-embed-text-v2-moe:latest
 
-# Tell repowise to use it
+# Setup environment
 export OPENAI_COMPATIBLE_BASE_URL="http://localhost:11434/v1"
-repowise init --provider openai_compatible --model llama3.2
+
+# Initialize with both providers and models
+repowise init \
+  --provider openai_compatible --model qwen2.5-coder:3b \
+  --embedder openai_compatible --embedder-model nomic-embed-text-v2-moe:latest
+```
+
+**Persistent environment with `.repowise/.env`:**
+
+Create `.repowise/.env` to save credentials locally (not committed to git):
+
+```bash
+# .repowise/.env
+OPENAI_COMPATIBLE_BASE_URL=http://localhost:11434/v1
+# OPENAI_COMPATIBLE_API_KEY=my-key  # Only if needed
+```
+
+Then `config.yaml` saves the model choices:
+
+```yaml
+# .repowise/config.yaml (auto-generated)
+provider: openai_compatible
+model: qwen2.5-coder:3b
+embedder: openai_compatible
+embedder_model: nomic-embed-text-v2-moe:latest
+```
+
+Future runs use the saved config automatically:
+
+```bash
+# Uses models from config
+repowise init
+repowise reindex
+repowise serve
 ```
 
 **LM Studio:**

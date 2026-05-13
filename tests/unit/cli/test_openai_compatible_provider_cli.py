@@ -132,7 +132,7 @@ class TestServerCatalog:
         assert compatible_entry is not None, "openai_compatible not found in PROVIDER_CATALOG"
         assert compatible_entry["name"] == "OpenAI-Compatible (Local/Custom)"
         assert compatible_entry["requires_key"] is False
-        assert compatible_entry["env_keys"] == []
+        assert "OPENAI_COMPATIBLE_API_KEY" in compatible_entry["env_keys"]
 
     def test_server_base_url_resolution(self, monkeypatch):
         """_get_base_url_for_provider should resolve OPENAI_COMPATIBLE_BASE_URL."""

@@ -315,6 +315,7 @@ def _run_workspace_generation(
     result: Any,
     provider: Any,
     embedder_name_resolved: str,
+    embedder_model: str | None,
     concurrency: int,
     yes: bool,
     resume: bool,
@@ -359,14 +360,14 @@ def _run_workspace_generation(
         try:
             from repowise.core.providers.embedding.gemini import GeminiEmbedder
 
-            embedder_impl = GeminiEmbedder()
+            embedder_impl = GeminiEmbedder(model=embedder_model) if embedder_model else GeminiEmbedder()
         except Exception:
             embedder_impl = MockEmbedder()
     elif embedder_name_resolved == "openai":
         try:
             from repowise.core.providers.embedding.openai import OpenAIEmbedder
 
-            embedder_impl = OpenAIEmbedder()
+            embedder_impl = OpenAIEmbedder(model=embedder_model) if embedder_model else OpenAIEmbedder()
         except Exception:
             embedder_impl = MockEmbedder()
     elif embedder_name_resolved == "openai_compatible":
@@ -375,14 +376,14 @@ def _run_workspace_generation(
                 OpenAICompatibleEmbedder,
             )
 
-            embedder_impl = OpenAICompatibleEmbedder()
+            embedder_impl = OpenAICompatibleEmbedder(model=embedder_model) if embedder_model else OpenAICompatibleEmbedder()
         except Exception:
             embedder_impl = MockEmbedder()
     elif embedder_name_resolved == "openrouter":
         try:
             from repowise.core.providers.embedding.openrouter import OpenRouterEmbedder
 
-            embedder_impl = OpenRouterEmbedder()
+            embedder_impl = OpenRouterEmbedder(model=embedder_model) if embedder_model else OpenRouterEmbedder()
         except Exception:
             embedder_impl = MockEmbedder()
     else:
@@ -615,6 +616,8 @@ def _workspace_init(
     # Resolve provider once (shared across all repos for generation)
     primary_cfg = load_config(primary_repo.path)
     resolved_reasoning = resolve_reasoning(reasoning, primary_cfg)
+    # Resolve embedder_model: CLI flag → config.yaml → None (use default)
+    embedder_model_resolved = embedder_model or primary_cfg.get("embedder_model")
     provider = None
     if not index_only:
         try:
@@ -724,6 +727,7 @@ def _workspace_init(
                         result=result,
                         provider=provider,
                         embedder_name_resolved=embedder_name_resolved,
+                        embedder_model=embedder_model_resolved,
                         concurrency=concurrency,
                         yes=yes,
                         resume=resume,
@@ -789,6 +793,7 @@ def _workspace_init(
                 provider.provider_name,
                 provider.model_name,
                 embedder_name_resolved,
+                embedder_model=embedder_model_resolved,
                 exclude_patterns=exclude_patterns if exclude_patterns else None,
                 commit_limit=resolved_commit_limit,
                 reasoning=resolved_reasoning,
@@ -909,6 +914,7 @@ def _workspace_init(
     type=click.Choice(["gemini", "openai", "openai_compatible", "openrouter", "mock"]),
     help="Embedder for RAG: gemini | openai | openai_compatible | openrouter | mock (default: auto-detect).",
 )
+@click.option("--embedder-model", default=None, help="Embedding model name (e.g., 'nomic-embed-text-v2-moe:latest' for Ollama).")
 @click.option("--skip-tests", is_flag=True, default=False, help="Skip test files.")
 @click.option("--skip-infra", is_flag=True, default=False, help="Skip infrastructure files.")
 @click.option(
@@ -982,6 +988,7 @@ def init_command(
     provider_name: str | None,
     model: str | None,
     embedder_name: str | None,
+    embedder_model: str | None,
     skip_tests: bool,
     skip_infra: bool,
     dry_run: bool,
@@ -1132,6 +1139,8 @@ def init_command(
     config = load_config(repo_path)
     language = config.get("language", "en")
     resolved_reasoning = resolve_reasoning(reasoning, config)
+    # Resolve embedder_model: CLI flag → config.yaml → None (use default)
+    embedder_model_resolved = embedder_model or config.get("embedder_model")
     exclude_patterns: list[str] = list(config.get("exclude_patterns") or []) + list(exclude)
 
     # Resolve commit limit: CLI flag → config.yaml → default (500)
@@ -1381,14 +1390,14 @@ def init_command(
                 try:
                     from repowise.core.providers.embedding.gemini import GeminiEmbedder
 
-                    embedder_impl = GeminiEmbedder()
+                    embedder_impl = GeminiEmbedder(model=embedder_model_resolved) if embedder_model_resolved else GeminiEmbedder()
                 except Exception:
                     embedder_impl = MockEmbedder()
             elif embedder_name_resolved == "openai":
                 try:
                     from repowise.core.providers.embedding.openai import OpenAIEmbedder
 
-                    embedder_impl = OpenAIEmbedder()
+                    embedder_impl = OpenAIEmbedder(model=embedder_model_resolved) if embedder_model_resolved else OpenAIEmbedder()
                 except Exception:
                     embedder_impl = MockEmbedder()
             elif embedder_name_resolved == "openai_compatible":
@@ -1397,14 +1406,14 @@ def init_command(
                         OpenAICompatibleEmbedder,
                     )
 
-                    embedder_impl = OpenAICompatibleEmbedder()
+                    embedder_impl = OpenAICompatibleEmbedder(model=embedder_model_resolved) if embedder_model_resolved else OpenAICompatibleEmbedder()
                 except Exception:
                     embedder_impl = MockEmbedder()
             elif embedder_name_resolved == "openrouter":
                 try:
                     from repowise.core.providers.embedding.openrouter import OpenRouterEmbedder
 
-                    embedder_impl = OpenRouterEmbedder()
+                    embedder_impl = OpenRouterEmbedder(model=embedder_model_resolved) if embedder_model_resolved else OpenRouterEmbedder()
                 except Exception:
                     embedder_impl = MockEmbedder()
             else:
@@ -1600,6 +1609,7 @@ def init_command(
             provider.provider_name,
             provider.model_name,
             embedder_name_resolved,
+            embedder_model=embedder_model_resolved,
             exclude_patterns=exclude_patterns if exclude_patterns else None,
             commit_limit=resolved_commit_limit if commit_limit is not None else None,
             reasoning=resolved_reasoning,

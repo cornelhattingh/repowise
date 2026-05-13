@@ -83,25 +83,31 @@ async def chat_messages(repo_id: str, body: ChatRequest, request: Request):
 
     # Resolve repo
     repo_name, repo_path = await _get_repo_info(factory, repo_id)
+    logger.info(f"Chat request for repo '{repo_name}' at {repo_path}, message preview: {body.message[:50]}...")
 
     # Resolve provider (optional per-request override)
     if body.provider:
         try:
             set_active_provider(body.provider, body.model)
+            logger.info(f"Using requested provider: {body.provider}, model: {body.model}")
         except ValueError as exc:
+            logger.error(f"Failed to set provider: {exc}")
             raise HTTPException(400, str(exc)) from exc
 
     try:
         provider = get_chat_provider_instance()
+        logger.info(f"Chat provider resolved: {provider.provider_name} ({provider.model_name})")
     except Exception as exc:
+        logger.error(f"Failed to get chat provider: {exc}", exc_info=True)
         raise HTTPException(422, f"No chat provider available: {exc}") from exc
 
     if not isinstance(provider, ChatProvider):
-        raise HTTPException(
-            422,
+        error_msg = (
             f"Provider '{provider.provider_name}' does not support streaming chat. "
-            "Configure a provider that supports tool use (Anthropic, OpenAI, Gemini).",
+            "Configure a provider that supports tool use (Anthropic, OpenAI, Gemini)."
         )
+        logger.error(error_msg)
+        raise HTTPException(422, error_msg)
 
     async def event_stream():
         conv_id = body.conversation_id
@@ -147,6 +153,7 @@ async def chat_messages(repo_id: str, body: ChatRequest, request: Request):
                 return await execute_tool(name, args)
 
             # Agentic loop
+            logger.info(f"Starting agentic loop for repo '{repo_name}' with {len(tool_schemas)} tools")
             assistant_text_parts: list[str] = []
             tool_calls_made: list[dict[str, Any]] = []
 
@@ -232,6 +239,7 @@ async def chat_messages(repo_id: str, body: ChatRequest, request: Request):
                             pass  # stop_reason = event.stop_reason (reserved for future use)
 
                 except ProviderError as exc:
+                    logger.error(f"Provider error during chat: {exc}", exc_info=True)
                     yield _sse_event(
                         "data",
                         {

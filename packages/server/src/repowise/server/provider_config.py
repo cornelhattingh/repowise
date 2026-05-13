@@ -81,7 +81,7 @@ PROVIDER_CATALOG: list[dict[str, Any]] = [
         "name": "OpenAI-Compatible (Local/Custom)",
         "default_model": "llama3.2",
         "models": ["llama3.2", "mistral", "qwen2.5-coder", "phi-3", "codellama"],
-        "env_keys": [],
+        "env_keys": ["OPENAI_COMPATIBLE_API_KEY", "OPENAI_API_KEY"],
         "requires_key": False,
     },
     {
@@ -110,6 +110,31 @@ def _config_path() -> Path:
 
 
 def _load_config() -> dict[str, Any]:
+    # First, try to load from config.yaml (created by CLI)
+    config_dir = os.environ.get("REPOWISE_CONFIG_DIR", "")
+    if config_dir:
+        yaml_path = Path(config_dir) / "config.yaml"
+        if yaml_path.exists():
+            try:
+                import yaml  # type: ignore[import-untyped]
+                yaml_config = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+                
+                # Convert YAML format to server format
+                # YAML has: provider, model, embedder, embedder_model
+                # Server expects: active_provider, active_model, keys
+                if yaml_config.get("provider"):
+                    provider = yaml_config["provider"]
+                    model = yaml_config.get("model")
+                    logger.info(f"Loaded provider config from {yaml_path}: provider={provider}, model={model}")
+                    return {
+                        "active_provider": provider,
+                        "active_model": model,
+                        "keys": {},
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to read config.yaml from {yaml_path}: {e}")
+    
+    # Fall back to provider_config.json (server-side persistent store)
     path = _config_path()
     if path.exists():
         try:
@@ -140,12 +165,19 @@ def _get_key_for_provider(provider_id: str) -> str | None:
     for env_key in catalog.get("env_keys", []):
         val = os.environ.get(env_key)
         if val:
+            logger.debug(f"API key found for provider '{provider_id}' from env var '{env_key}'")
             return val
 
     # Check stored config
     config = _load_config()
     keys = config.get("keys", {})
-    return keys.get(provider_id)
+    key = keys.get(provider_id)
+    if key:
+        logger.debug(f"API key found for provider '{provider_id}' from stored config")
+        return key
+    
+    logger.debug(f"No API key found for provider '{provider_id}'")
+    return None
 
 
 def _get_base_url_for_provider(provider_id: str) -> str | None:
@@ -248,8 +280,17 @@ def get_chat_provider_instance():
     api_key = _get_key_for_provider(provider_id)
     base_url = _get_base_url_for_provider(provider_id)
     catalog = _CATALOG_BY_ID[provider_id]
+    
+    model_to_use = model or catalog["default_model"]
+    logger.info(f"Creating chat provider instance: provider={provider_id}, model={model_to_use}")
+    if api_key:
+        logger.debug(f"  API key: {'*' * 8}*** (redacted)")
+    else:
+        logger.debug("  API key: <none>")
+    if base_url:
+        logger.debug(f"  Base URL: {base_url}")
 
-    kwargs: dict[str, Any] = {"model": model or catalog["default_model"]}
+    kwargs: dict[str, Any] = {"model": model_to_use}
     if api_key:
         kwargs["api_key"] = api_key
     if base_url:

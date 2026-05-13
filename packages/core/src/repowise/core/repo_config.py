@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +10,14 @@ CONFIG_FILENAME = "config.yaml"
 
 
 def get_repowise_dir(repo_path: Path | str) -> Path:
-    """Return the repo-local ``.repowise`` directory."""
+    """Return the repo-local ``.repowise`` directory.
+    
+    If REPOWISE_CONFIG_DIR environment variable is set, returns that instead.
+    This allows centralizing config/data across multiple repositories.
+    """
+    config_dir = os.environ.get("REPOWISE_CONFIG_DIR")
+    if config_dir:
+        return Path(config_dir).resolve()
     return Path(repo_path) / ".repowise"
 
 

@@ -68,7 +68,14 @@ def find_workspace_root(start: Path | None = None) -> Path | None:
 
 
 def get_repowise_dir(repo_path: Path) -> Path:
-    """Return the ``.repowise/`` directory for a given repo root."""
+    """Return the ``.repowise/`` directory for a given repo root.
+    
+    If REPOWISE_CONFIG_DIR is set, it overrides the default location.
+    This allows centralizing config/data across multiple repos.
+    """
+    config_dir = os.environ.get("REPOWISE_CONFIG_DIR")
+    if config_dir:
+        return Path(config_dir).resolve()
     return repo_path / REPOWISE_DIR
 
 
@@ -249,6 +256,7 @@ def save_config(
     model: str,
     embedder: str,
     *,
+    embedder_model: str | None = None,
     exclude_patterns: list[str] | None = None,
     commit_limit: int | None = None,
     reasoning: str | None = None,
@@ -265,6 +273,8 @@ def save_config(
     existing["provider"] = provider
     existing["model"] = model
     existing["embedder"] = embedder
+    if embedder_model is not None:
+        existing["embedder_model"] = embedder_model
     if exclude_patterns is not None:
         existing["exclude_patterns"] = exclude_patterns
     if commit_limit is not None:
