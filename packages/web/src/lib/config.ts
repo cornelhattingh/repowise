@@ -10,6 +10,7 @@ const KEYS = {
   provider: "repowise_default_provider",
   model: "repowise_default_model",
   embedder: "repowise_embedder",
+  openaiCompatibleBaseUrl: "repowise_openai_compatible_base_url",
 } as const;
 
 function read(key: string): string {
@@ -41,4 +42,7 @@ export const config = {
 
   getEmbedder: () => read(KEYS.embedder) || "mock",
   setEmbedder: (v: string) => write(KEYS.embedder, v),
+
+  getOpenAICompatibleBaseUrl: () => read(KEYS.openaiCompatibleBaseUrl),
+  setOpenAICompatibleBaseUrl: (v: string) => write(KEYS.openaiCompatibleBaseUrl, v),
 };

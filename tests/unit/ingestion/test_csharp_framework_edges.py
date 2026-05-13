@@ -246,6 +246,40 @@ builder.Services.AddScoped<IUserService, UserService>();
         edges = DotNetDynamicHints().extract(tmp_path)
         assert any(e.source == "Boot.cs" and e.target == "Worker.cs" for e in edges)
 
+    def test_nameof_type_emits_dynamic_uses(self, tmp_path: Path) -> None:
+        """``nameof(MySettings)`` must surface as a dynamic edge to the
+        defining file (audit item #26).
+        """
+        (tmp_path / "MySettings.cs").write_text(
+            "namespace Acme;\npublic class MySettings { }\n"
+        )
+        (tmp_path / "Program.cs").write_text(
+            """namespace Acme;
+public class Bootstrap {
+    void Configure() {
+        services.Configure<MySettings>(nameof(MySettings));
+    }
+}
+"""
+        )
+        edges = DotNetDynamicHints().extract(tmp_path)
+        assert any(
+            e.source == "Program.cs"
+            and e.target == "MySettings.cs"
+            and e.hint_source.endswith(":nameof")
+            for e in edges
+        )
+
+    def test_nameof_lowercase_member_ignored(self, tmp_path: Path) -> None:
+        """``nameof(someLocal)`` must NOT bind — only type-looking
+        identifiers are scanned to keep noise out.
+        """
+        (tmp_path / "Foo.cs").write_text(
+            'namespace Acme;\npublic class Foo { void Go(int someLocal) { var n = nameof(someLocal); } }\n'
+        )
+        edges = DotNetDynamicHints().extract(tmp_path)
+        assert not any(e.hint_source.endswith(":nameof") for e in edges)
+
     def test_internals_visible_to_emits_friend_edge(self, tmp_path: Path) -> None:
         (tmp_path / "AssemblyInfo.cs").write_text(
             '[assembly: InternalsVisibleTo("Acme.Tests")]\n'

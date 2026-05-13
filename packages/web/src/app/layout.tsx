@@ -11,6 +11,7 @@ import { CommandPalette } from "@/components/search/command-palette";
 import { ContextDrawerShell } from "@/components/layout/context-drawer-provider";
 import { listRepos } from "@/lib/api/repos";
 import { getWorkspace } from "@/lib/api/workspace";
+import { auth, AUTH_ENABLED } from "@/auth";
 import type { WorkspaceResponse } from "@/lib/api/types";
 import "@/styles/globals.css";
 
@@ -31,6 +32,7 @@ export default async function RootLayout({
   // Gracefully fall back to empty/null if the API is unavailable.
   let repos: Awaited<ReturnType<typeof listRepos>> = [];
   let workspace: WorkspaceResponse | null = null;
+  let user: { name?: string | null; email?: string | null; image?: string | null } | null = null;
   try {
     const [reposResult, wsResult] = await Promise.allSettled([
       listRepos(),
@@ -40,6 +42,11 @@ export default async function RootLayout({
     if (wsResult.status === "fulfilled") workspace = wsResult.value;
   } catch {
     // API not available — show empty sidebar
+  }
+
+  if (AUTH_ENABLED) {
+    const session = await auth();
+    user = session?.user ?? null;
   }
 
   return (
@@ -59,7 +66,7 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <ContextDrawerShell>
               <div className="flex h-screen overflow-hidden">
-                <Sidebar repos={repos} workspace={workspace} />
+                <Sidebar repos={repos} workspace={workspace} user={user} />
                 <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
                   <MobileNav repos={repos} workspace={workspace} />
                   <main id="main-content" className="flex-1 overflow-auto min-w-0">

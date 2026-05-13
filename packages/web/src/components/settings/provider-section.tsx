@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@repowise-dev/ui/ui/select";
 
-const PROVIDERS = ["gemini", "openai", "anthropic", "deepseek", "ollama", "litellm", "mock"] as const;
+const PROVIDERS = ["gemini", "openai", "anthropic", "deepseek", "ollama", "openai_compatible", "litellm", "mock"] as const;
 const EMBEDDERS = ["mock", "gemini", "openai"] as const;
 
 const MODEL_PLACEHOLDERS: Record<string, string> = {
@@ -23,6 +23,7 @@ const MODEL_PLACEHOLDERS: Record<string, string> = {
   anthropic: "claude-sonnet-4-6",
   deepseek: "deepseek-v4-flash",
   ollama: "llama3.2",
+  openai_compatible: "llama3.2",
   litellm: "groq/llama-3.1-70b-versatile",
   mock: "mock",
 };
@@ -33,6 +34,10 @@ const PROVIDER_ENV_VARS: Record<string, { vars: string[]; installHint: string }>
   anthropic: { vars: ["ANTHROPIC_API_KEY"], installHint: "pip install anthropic" },
   ollama: { vars: ["OLLAMA_BASE_URL"], installHint: "https://ollama.ai" },
   deepseek: { vars: ["DEEPSEEK_API_KEY"], installHint: "pip install openai" },
+  openai_compatible: {
+    vars: ["OPENAI_COMPATIBLE_BASE_URL", "OPENAI_COMPATIBLE_API_KEY"],
+    installHint: "Any OpenAI-compatible endpoint (Ollama, LocalAI, vLLM, etc.)",
+  },
   litellm: { vars: ["LITELLM_*"], installHint: "pip install litellm" },
   mock: { vars: [], installHint: "No key needed" },
 };
@@ -49,6 +54,7 @@ export function ProviderSection() {
   const [provider, setProvider] = useState("gemini");
   const [model, setModel] = useState("");
   const [embedder, setEmbedder] = useState("mock");
+  const [openaiCompatibleBaseUrl, setOpenaiCompatibleBaseUrl] = useState("");
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
   const [testError, setTestError] = useState("");
   const [serverProvider, setServerProvider] = useState<string | null>(null);
@@ -58,6 +64,7 @@ export function ProviderSection() {
     setProvider(config.getProvider());
     setModel(config.getModel());
     setEmbedder(config.getEmbedder());
+    setOpenaiCompatibleBaseUrl(config.getOpenAICompatibleBaseUrl());
     // Fetch current server config from /api/health
     fetch("/api/health")
       .then((r) => r.json())
@@ -138,6 +145,24 @@ export function ProviderSection() {
               />
             </div>
           </div>
+
+          {provider === "openai_compatible" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="openai-compatible-base-url">Base URL</Label>
+              <Input
+                id="openai-compatible-base-url"
+                placeholder="http://localhost:11434/v1"
+                value={openaiCompatibleBaseUrl}
+                onChange={(e) => setOpenaiCompatibleBaseUrl(e.target.value)}
+                onBlur={() => config.setOpenAICompatibleBaseUrl(openaiCompatibleBaseUrl)}
+                className="font-mono"
+              />
+              <p className="text-xs text-[var(--color-text-tertiary)]">
+                Saved locally. Set <code className="font-mono">OPENAI_COMPATIBLE_BASE_URL</code> to
+                the same value on the server.
+              </p>
+            </div>
+          )}
 
           {providerInfo && providerInfo.vars.length > 0 && (
             <div className="rounded-md border border-dashed p-3 space-y-1.5">
