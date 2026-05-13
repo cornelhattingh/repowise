@@ -28,6 +28,7 @@ import { ScrollArea } from "@repowise-dev/ui/ui/scroll-area";
 import { Separator } from "@repowise-dev/ui/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@repowise-dev/ui/ui/tooltip";
 import { AddRepoDialog } from "@/components/repos/add-repo-dialog";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { RepoResponse, WorkspaceResponse } from "@/lib/api/types";
 
 interface NavItem {
@@ -68,9 +69,10 @@ interface SidebarProps {
   repos?: RepoResponse[];
   activeRepoId?: string;
   workspace?: WorkspaceResponse | null;
+  user?: { name?: string | null; email?: string | null; image?: string | null } | null;
 }
 
-export function Sidebar({ repos = [], activeRepoId, workspace }: SidebarProps) {
+export function Sidebar({ repos = [], activeRepoId, workspace, user }: SidebarProps) {
   const isWorkspace = workspace?.is_workspace ?? false;
   const pathname = usePathname();
   const derivedActiveRepoId = React.useMemo(() => {
@@ -324,12 +326,29 @@ export function Sidebar({ repos = [], activeRepoId, workspace }: SidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      {!isIconOnly && (
-        <div className="border-t border-[var(--color-border-default)] px-4 py-3">
-          <p className="text-xs text-[var(--color-text-tertiary)]">
-            repowise v0.1.0
-          </p>
+      {!isIconOnly ? (
+        <div className="border-t border-[var(--color-border-default)] px-4 py-3 space-y-2">
+          {user && (
+            <div className="space-y-1">
+              <p className="truncate text-xs font-medium text-[var(--color-text-secondary)]">
+                {user.name ?? user.email}
+              </p>
+              {user.name && user.email && (
+                <p className="truncate text-xs text-[var(--color-text-tertiary)]">{user.email}</p>
+              )}
+              <SignOutButton />
+            </div>
+          )}
+          {!user && (
+            <p className="text-xs text-[var(--color-text-tertiary)]">repowise v0.1.0</p>
+          )}
         </div>
+      ) : (
+        user && (
+          <div className="border-t border-[var(--color-border-default)] px-2 py-3">
+            <SignOutButton iconOnly />
+          </div>
+        )
       )}
     </aside>
   );

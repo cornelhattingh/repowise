@@ -1,7 +1,8 @@
-"""/api/webhooks — GitHub and GitLab webhook handlers."""
+"""/api/webhooks — GitHub, GitLab, and Azure DevOps webhook handlers."""
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
 _GITHUB_SECRET = os.environ.get("REPOWISE_GITHUB_WEBHOOK_SECRET", "")
 _GITLAB_TOKEN = os.environ.get("REPOWISE_GITLAB_WEBHOOK_TOKEN", "")
+_AZURE_SECRET = os.environ.get("REPOWISE_AZURE_WEBHOOK_SECRET", "")
 
 
 def _verify_github_signature(body: bytes, signature_header: str) -> None:
@@ -188,5 +190,115 @@ async def gitlab_webhook(
                 await crud.mark_webhook_processed(session, event.id, job_id=job.id)
                 await session.commit()
                 _launch_webhook_job(request, job.id)
+
+    return WebhookResponse(event_id=event.id)
+
+
+def _verify_azure_basic_auth(authorization_header: str) -> None:
+    """Verify Azure DevOps Service Hooks Basic auth credential.
+
+    Azure DevOps encodes the shared secret as the password portion of
+    HTTP Basic auth (``Authorization: Basic base64(username:password)``).
+    Set REPOWISE_AZURE_WEBHOOK_SECRET to the password value you configured
+    in the Service Hook subscription.
+    """
+    if not _AZURE_SECRET:
+        return  # No secret configured — skip verification (dev mode)
+
+    if not authorization_header.startswith("Basic "):
+        raise HTTPException(status_code=401, detail="Missing Basic auth")
+
+    try:
+        decoded = base64.b64decode(authorization_header[6:]).decode("utf-8")
+        _, _, password = decoded.partition(":")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Malformed Basic auth")
+
+    if not hmac.compare_digest(password, _AZURE_SECRET):
+        raise HTTPException(status_code=401, detail="Invalid credential")
+
+
+@router.post("/azure", response_model=WebhookResponse)
+async def azure_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
+) -> WebhookResponse:
+    """Receive and process Azure DevOps Service Hook events.
+
+    Verifies HTTP Basic auth (password = REPOWISE_AZURE_WEBHOOK_SECRET),
+    stores the event, and enqueues a sync job for:
+
+    - ``git.push`` — direct push to the default branch
+    - ``git.pullrequest.merged`` — PR merged into the default branch
+
+    Configure in Azure DevOps:
+      Project Settings → Service Hooks → Web Hooks
+      URL: https://<host>/api/webhooks/azure
+      Basic auth password: value of REPOWISE_AZURE_WEBHOOK_SECRET
+      Trigger: "Code pushed" and/or "Pull request merged"
+    """
+    auth = request.headers.get("Authorization", "")
+    _verify_azure_basic_auth(auth)
+
+    body = await request.body()
+    payload = json.loads(body)
+    event_type = payload.get("eventType", "unknown")
+
+    event = await crud.store_webhook_event(
+        session,
+        provider="azure",
+        event_type=event_type,
+        payload=payload,
+    )
+
+    resource = payload.get("resource", {})
+    repo_url = resource.get("repository", {}).get("remoteUrl", "")
+
+    before = ""
+    after = ""
+    branch = ""
+
+    if event_type == "git.push":
+        # refUpdates is a list; use the first branch entry
+        ref_updates = resource.get("refUpdates", [{}])
+        if ref_updates:
+            branch = ref_updates[0].get("name", "")
+            before = ref_updates[0].get("oldObjectId", "")
+            after = ref_updates[0].get("newObjectId", "")
+
+    elif event_type == "git.pullrequest.merged":
+        branch = resource.get("targetRefName", "")
+        # after = merge commit on the target branch
+        after = resource.get("lastMergeTargetCommit", {}).get("commitId", "")
+        # before = source branch tip (used as diff base)
+        before = resource.get("lastMergeSourceCommit", {}).get("commitId", "")
+
+    # Only sync pushes/merges to the default branch
+    if branch.startswith("refs/heads/") and repo_url:
+        branch_name = branch[len("refs/heads/"):]
+
+        from sqlalchemy import select
+
+        from repowise.core.persistence.models import Repository
+
+        result = await session.execute(
+            select(Repository).where(Repository.url.contains(repo_url[:50]))
+        )
+        repo = result.scalar_one_or_none()
+        if repo and branch_name == repo.default_branch:
+            job = await crud.upsert_generation_job(
+                session,
+                repository_id=repo.id,
+                status="pending",
+                config={
+                    "mode": "incremental",
+                    "trigger": "webhook",
+                    "before": before,
+                    "after": after,
+                },
+            )
+            await crud.mark_webhook_processed(session, event.id, job_id=job.id)
+            await session.commit()
+            _launch_webhook_job(request, job.id)
 
     return WebhookResponse(event_id=event.id)
